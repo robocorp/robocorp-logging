@@ -84,13 +84,48 @@ def rewrite_ast_add_callbacks(
             break
 
         if node.__class__.__name__ == "Return":
+
+            if not stack:
+                continue
+            stack_it = reversed(stack)
+            for function in stack_it:
+                if function.__class__.__name__ != "FunctionDef":
+                    continue
+                break
+
+            class_name = ""
+            try:
+                parent = next(stack_it)
+                if parent.__class__.__name__ == "ClassDef":
+                    class_name = parent.name + "."
+            except StopIteration:
+                pass
+
             factory = _ast_utils.NodeFactory(node.lineno, node.col_offset)
 
-            call = factory.Call()
-            call.func = factory.NameLoadRewriteCallback("after_method")
-            call.args.append(factory.Str(f"Leaving with return"))
+            result = []
 
-            it.send([factory.Expr(call), node])
+            call = factory.Call()
+            call.func = factory.NameLoadRewriteCallback("method_return")
+            call.args.append(factory.Str(f"{class_name}{function.name}"))
+
+            if node.value:
+                assign = factory.Assign()
+                store_name = factory.NameTempStore()
+                assign.targets = [store_name]
+                assign.value = node.value
+
+                node.value = factory.NameLoad(store_name.id)
+
+                result.append(assign)
+                call.args.append(factory.NameLoad(store_name.id))
+            else:
+                call.args.append(factory.NameLoad("None"))
+
+            result.append(factory.Expr(call))
+            result.append(node)
+
+            it.send(result)
 
         elif node.__class__.__name__ == "FunctionDef":
             function = node
@@ -111,7 +146,7 @@ def rewrite_ast_add_callbacks(
                 # Only rewrite functions which actually have some content.
                 call = factory.Call()
                 call.func = factory.NameLoadRewriteCallback("before_method")
-                call.args.append(factory.Str(f"Entering: {class_name}{function.name}"))
+                call.args.append(factory.Str(f"{class_name}{function.name}"))
 
                 dct = factory.Dict()
                 keys = []
@@ -143,10 +178,11 @@ def rewrite_ast_add_callbacks(
                 )
                 call = factory.Call()
                 call.func = factory.NameLoadRewriteCallback("after_method")
-                call.args.append(factory.Str(f"Leaving: {class_name}{function.name}"))
+                call.args.append(factory.Str(f"{class_name}{function.name}"))
 
                 try_finally.finalbody = [factory.Expr(call)]
 
                 function.body = [try_finally]
 
+    print("\n============ New AST (with hooks in place) ==============\n")
     print(ast.unparse(mod))

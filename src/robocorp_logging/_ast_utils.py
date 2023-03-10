@@ -1,3 +1,6 @@
+import ast
+from functools import partial
+import itertools
 import sys
 from typing import (
     Iterator,
@@ -7,10 +10,9 @@ from typing import (
     Generic,
     TypeVar,
 )
+import typing
 
 import ast as ast_module
-import typing
-import ast
 
 
 class _NodesProviderVisitor(ast_module.NodeVisitor):
@@ -197,41 +199,50 @@ class NodeFactory:
     def __init__(self, lineno, col_offset):
         self.lineno = lineno
         self.col_offset = col_offset
+        self.next_var_id = partial(next, itertools.count())
 
     def _set_line_col(self, node):
         node.lineno = self.lineno
         node.col_offset = self.col_offset
         return node
 
-    def Call(self):
+    def Call(self) -> ast.Call:
         call = ast.Call(keywords=[], args=[])
         return self._set_line_col(call)
 
-    def NameLoad(self, name: str):
+    def Assign(self) -> ast.Assign:
+        assign = ast.Assign()
+        return self._set_line_col(assign)
+
+    def NameLoad(self, name: str) -> ast.Name:
         return self._set_line_col(ast.Name(name, ast.Load()))
+
+    def NameTempStore(self) -> ast.Name:
+        name = f"@tmp_{self.next_var_id()}"
+        return self._set_line_col(ast.Name(name, ast.Store()))
 
     def Attribute(self, name: ast.AST, attr_name: str) -> ast.Attribute:
         return self._set_line_col(ast.Attribute(name, attr_name, ast.Load()))
 
-    def NameLoadBuiltin(self, builtin_name: str):
+    def NameLoadBuiltin(self, builtin_name: str) -> ast.Attribute:
         builtin_ref = self.NameLoad("@py_builtins")
 
         return self._set_line_col(self.Attribute(builtin_ref, builtin_name))
 
-    def NameLoadRewriteCallback(self, builtin_name: str):
+    def NameLoadRewriteCallback(self, builtin_name: str) -> ast.Attribute:
         builtin_ref = self.NameLoad("@robocorp_rewrite_callbacks")
 
         return self._set_line_col(self.Attribute(builtin_ref, builtin_name))
 
-    def Str(self, s):
+    def Str(self, s) -> ast.Str:
         return self._set_line_col(ast.Str(s))
 
-    def Expr(self, expr):
+    def Expr(self, expr) -> ast.Expr:
         return self._set_line_col(ast.Expr(expr))
 
-    def Try(self):
+    def Try(self) -> ast.Try:
         try_node = ast.Try(handlers=[], orelse=[])
         return self._set_line_col(try_node)
 
-    def Dict(self):
+    def Dict(self) -> ast.Dict:
         return self._set_line_col(ast.Dict())
