@@ -4,7 +4,7 @@ def test_ast_utils():
 
     node = ast.parse(
         """
-print('some string')
+print({'a': c, 1: d})
 """,
         filename="<string>",
     )
@@ -22,3 +22,4 @@ def test_rewrite_hook():
     from robot_out_stream_tests._resources import check
 
     check.some_method()
+    check.SomeClass(1, 2)

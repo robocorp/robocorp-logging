@@ -244,13 +244,13 @@ def _write_pyc(
 
 def _rewrite(fn: Path, config: Config) -> Tuple[os.stat_result, types.CodeType]:
     """Read and rewrite *fn* and return the code object."""
-    from ._rewrite_with_logging import rewrite_with_logging
+    from ._rewrite_ast import rewrite_ast_add_callbacks
 
     stat = os.stat(fn)
     source = fn.read_bytes()
     strfn = str(fn)
     tree = ast.parse(source, filename=strfn)
-    rewrite_with_logging(tree, source, strfn, config)
+    rewrite_ast_add_callbacks(tree, source, strfn, config)
     co = compile(tree, strfn, "exec", dont_inherit=True)
     return stat, co
 

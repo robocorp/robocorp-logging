@@ -132,7 +132,7 @@ else:
     _AST_CLASS = ast_module.AST
 
 
-def iter_nodes(
+def iter_and_replace_nodes(
     node, internal_stack: Optional[List[INode]] = None, recursive=True
 ) -> Iterator[Tuple[List[INode], INode]]:
     """
@@ -163,7 +163,7 @@ def iter_nodes(
                             new_value.append(item)
 
                         stack.append(item)
-                        yield from iter_nodes(item, stack, recursive=True)
+                        yield from iter_and_replace_nodes(item, stack, recursive=True)
                         stack.pop()
 
                 if changed:
@@ -173,7 +173,7 @@ def iter_nodes(
                 yield stack, value
                 stack.append(value)
 
-                yield from iter_nodes(value, stack, recursive=True)
+                yield from iter_and_replace_nodes(value, stack, recursive=True)
 
                 stack.pop()
     else:
@@ -218,8 +218,8 @@ class NodeFactory:
 
         return self._set_line_col(self.Attribute(builtin_ref, builtin_name))
 
-    def NameLoadRewriteMod(self, builtin_name: str):
-        builtin_ref = self.NameLoad("@robocorp_log_rh")
+    def NameLoadRewriteCallback(self, builtin_name: str):
+        builtin_ref = self.NameLoad("@robocorp_rewrite_callbacks")
 
         return self._set_line_col(self.Attribute(builtin_ref, builtin_name))
 
@@ -232,3 +232,6 @@ class NodeFactory:
     def Try(self):
         try_node = ast.Try(handlers=[], orelse=[])
         return self._set_line_col(try_node)
+
+    def Dict(self):
+        return self._set_line_col(ast.Dict())
