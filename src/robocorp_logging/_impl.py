@@ -197,6 +197,7 @@ class _StackHandler:
 class _RobotOutputImpl:
     def __init__(self, config: _Config):
         self._written_initial = False
+        self._closed = False
 
         # Base memory for all streams (rotated or not)
         self._base_memo: Dict[str, str] = {}
@@ -439,7 +440,7 @@ class _RobotOutputImpl:
         )
         self._stack_handler.pop("test", test_id)
 
-    def start_keyword(
+    def start_method(
         self,
         name,
         libname,
@@ -504,7 +505,7 @@ class _RobotOutputImpl:
                         ],
                     )
 
-    def end_keyword(self, name, libname, status, time_delta):
+    def end_method(self, name, libname, status, time_delta):
         keyword_id = f"{libname}.{name}"
         oid = self._obtain_id
         stack_entry = self._stack_handler.pop("keyword", keyword_id)
@@ -551,6 +552,10 @@ class _RobotOutputImpl:
         )
 
     def close(self):
+        if self._closed:
+            return
+
+        self._closed = True
         import base64
 
         log_html = self._config.log_html

@@ -1,10 +1,11 @@
 import datetime
 import json
-from typing import Optional, Any, Iterator, List
+from typing import Optional, Any, Iterator, List, Sequence
 import sys
 import functools
 from io import StringIO
 import weakref
+from contextlib import contextmanager
 
 __version__ = "0.0.1"
 version_info = [int(x) for x in __version__.split(".")]
@@ -169,7 +170,7 @@ class _RobocorpLogger:
         )
 
     @_log_error
-    def start_task(self, name, attributes):
+    def start_task(self, name: str, task_id: str, lineno: int, tags: Sequence[str]):
         # {
         #     "id": "s1-t1",
         #     "longname": "Robot1.First task",
@@ -183,12 +184,10 @@ class _RobocorpLogger:
         # }
         return self._robot_output_impl.start_task(
             name,
-            attributes["id"],
-            attributes.get(
-                "lineno"
-            ),  # The source is already given by the suite (no need to repeat)
+            task_id,
+            lineno,
             self._get_time_delta(),
-            attributes.get("tags"),
+            tags,
         )
 
     @_log_error
@@ -210,7 +209,7 @@ class _RobocorpLogger:
         return self._robot_output_impl.send_start_time_delta(time_delta_in_seconds)
 
     @_log_error
-    def end_task(self, name, attributes):
+    def end_task(self, name: str, task_id: str, status: str, message: str):
         # {
         #     "id": "s1-t2",
         #     "longname": "Robot1.Second task",
@@ -227,9 +226,9 @@ class _RobocorpLogger:
         #     "originalname": "Second task",
         # }
         return self._robot_output_impl.end_task(
-            attributes["id"],
-            attributes["status"],
-            attributes["message"],
+            task_id,
+            status,
+            message,
             self._get_time_delta(),
         )
 
@@ -237,7 +236,7 @@ class _RobocorpLogger:
         pass
 
     @_log_error
-    def start_keyword(self, name, attributes):
+    def start_method(self, name, attributes):
         # print("----start----\n", json.dumps(attributes, indent=4))
 
         hide_from_logs = False
@@ -308,7 +307,7 @@ class _RobocorpLogger:
             libname = ""
 
         kw_assign = attributes.get("assign")
-        return self._robot_output_impl.start_keyword(
+        return self._robot_output_impl.start_method(
             name,
             libname,
             kw_type,
@@ -322,7 +321,7 @@ class _RobocorpLogger:
         )
 
     @_log_error
-    def end_keyword(self, name, attributes):
+    def end_method(self, name, attributes):
         # print("----end----\n", json.dumps(attributes, indent=4))
 
         try:
@@ -346,7 +345,7 @@ class _RobocorpLogger:
             if libname is None:
                 libname = ""
 
-            return self._robot_output_impl.end_keyword(
+            return self._robot_output_impl.end_method(
                 name, libname, attributes["status"], self._get_time_delta()
             )
         finally:
@@ -388,11 +387,6 @@ class _RobocorpLogger:
         )
 
     @_log_error
-    def message(self, message):
-        if message["level"] in ("FAIL", "ERROR"):
-            return self.log_message(message, skip_error=False)
-
-    @_log_error
     def close(self):
         self.robot_output_impl.close()
 
@@ -419,24 +413,56 @@ def iter_decoded_log_format(stream) -> Iterator[dict]:
     return iter_decoded_log_format(stream)
 
 
-__all_logger_instances__: "Set[_RobocorpLogger]" = set()
+# We could use a set, but we're using a dict to keep the order.
+__all_logger_instances__: "Dict[_RobocorpLogger, int]" = {}
 
 
-def config_logging_output(
+@contextmanager
+def add_logging_output(
     output_dir: Optional[str] = None,
     max_file_size: Optional[str] = None,
     max_files: int = 0,
     log_html: Optional[str] = None,
 ):
     logger = _RobocorpLogger(output_dir, max_file_size, max_files, log_html)
-    __all_logger_instances__.add(logger)
+    __all_logger_instances__[logger] = 1
+    yield
+    __all_logger_instances__.pop(logger)
+    logger.close()
 
 
-def config_auto_logging(enable: bool = True) -> None:
-    """
-    The auto-logging works with a post-import hook where method calls are
-    decorated accordingly.
-    """
+# --- Actual logging methods
+
+
+class Status:
+    PASS = "PASS"
+    ERROR = "ERROR"
+    FAIL = "FAIL"
+    INFO = "INFO"
+    WARN = "WARN"
+
+
+def log_start_suite(name: str, suite_id: str, suite_source: str) -> None:
+    for rf_stream in __all_logger_instances__:
+        rf_stream.start_suite(name, suite_id, suite_source)
+
+
+def log_end_suite(name: str, suite_id: str, status: str) -> None:
+    for rf_stream in __all_logger_instances__:
+        rf_stream.end_suite(name, suite_id, status)
+
+
+def log_start_task(self, name: str, task_id: str, lineno: int, tags: Sequence[str]):
+    for rf_stream in __all_logger_instances__:
+        rf_stream.start_task(name, task_id, lineno, tags)
+
+
+def log_end_task(self, name: str, task_id: str, status: str, message: str):
+    for rf_stream in __all_logger_instances__:
+        rf_stream.end_task(name, task_id, status, message)
+
+
+# --- Methods related to hiding logging information.
 
 
 def stop_logging_methods():
