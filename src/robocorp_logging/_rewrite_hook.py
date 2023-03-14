@@ -48,14 +48,22 @@ PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
 FORCE_CODE_GENERATION = True
+DEBUG = False
 
 
 class Config:
     pass
 
 
-def trace(msg):
-    print(msg)
+if DEBUG:
+
+    def trace(msg):
+        print(msg)
+
+else:
+
+    def trace(msg):
+        pass
 
 
 class RewriteHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):

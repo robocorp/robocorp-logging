@@ -3,6 +3,8 @@ from typing import Optional
 import sys
 from ._rewrite_hook import Config
 
+DEBUG = False
+
 
 def is_rewrite_disabled(docstring: str) -> bool:
     return "NO_LOG" in docstring
@@ -184,5 +186,6 @@ def rewrite_ast_add_callbacks(
 
                 function.body = [try_finally]
 
-    print("\n============ New AST (with hooks in place) ==============\n")
-    print(ast.unparse(mod))
+    if DEBUG:
+        print("\n============ New AST (with hooks in place) ==============\n")
+        print(ast.unparse(mod))

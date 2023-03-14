@@ -9,4 +9,4 @@ def some_method():
 
 class SomeClass:
     def __init__(self, arg1, arg2):
-        print(arg1, arg2)
+        pass
