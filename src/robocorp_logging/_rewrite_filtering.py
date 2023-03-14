@@ -3,10 +3,22 @@ import glob
 import os.path
 import sys
 
-import json
 from collections import namedtuple
-from pydevd_file_utils import normcase
 import platform
+import logging
+from typing import Sequence, Optional
+import threading
+
+log = logging.getLogger(__name__)
+
+
+def normcase(s, NORMCASE_CACHE={}):
+    try:
+        return NORMCASE_CACHE[s]
+    except:
+        normalized = NORMCASE_CACHE[s] = s.lower()
+        return normalized
+
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 IS_WINDOWS = sys.platform == "win32"
@@ -15,7 +27,11 @@ IS_MAC = sys.platform == "darwin"
 
 LIBRARY_CODE_BASENAMES_STARTING_WITH = ("<",)
 
-ExcludeFilter = namedtuple("ExcludeFilter", "name, exclude, is_path")
+# Examples:
+# Filter("mymodule.ignore", exclude=True, is_path=False)
+# Filter("mymodule.rpa", exclude=False, is_path=False)
+# Filter("**/check/**", exclude=True, is_path=True)
+Filter = namedtuple("Filter", "name, exclude, is_path")
 
 
 def _convert_to_str_and_clear_empty(roots):
@@ -91,62 +107,25 @@ class FilesFiltering(object):
     """
     Note: calls at FilesFiltering are uncached.
 
-    The actual API used should be through PyDB.
+    The actual API used should be through the ConfigFilesFiltering.
     """
 
-    def __init__(self):
-        self._exclude_filters = []
+    def __init__(
+        self,
+        project_roots: Optional[Sequence[str]] = None,
+        library_roots: Optional[Sequence[str]] = None,
+        filters: Sequence[Filter] = None,
+    ):
+        self._filters = filters
         self._project_roots = []
         self._library_roots = []
 
-        # Filter out libraries?
-        self._use_libraries_filter = False
-        self.require_module = (
-            False  # True if some exclude filter filters by the module.
-        )
-
-        self.set_use_libraries_filter(os.getenv("PYDEVD_FILTER_LIBRARIES") is not None)
-
-        project_roots = os.getenv("IDE_PROJECT_ROOTS", None)
-        if project_roots is not None:
-            project_roots = project_roots.split(os.pathsep)
-        else:
-            project_roots = []
         self.set_project_roots(project_roots)
-
-        library_roots = os.getenv("LIBRARY_ROOTS", None)
-        if library_roots is not None:
-            library_roots = library_roots.split(os.pathsep)
-        else:
-            library_roots = self._get_default_library_roots()
         self.set_library_roots(library_roots)
-
-        # Stepping filters.
-        pydevd_filters = os.getenv("PYDEVD_FILTERS", "")
-        # To filter out it's something as: {'**/not_my_code/**': True}
-        if pydevd_filters:
-            pydev_log.debug("PYDEVD_FILTERS %s", (pydevd_filters,))
-            if pydevd_filters.startswith("{"):
-                # dict(glob_pattern (str) -> exclude(True or False))
-                exclude_filters = []
-                for key, val in json.loads(pydevd_filters).items():
-                    exclude_filters.append(ExcludeFilter(key, val, True))
-                self._exclude_filters = exclude_filters
-            else:
-                # A ';' separated list of strings with globs for the
-                # list of excludes.
-                filters = pydevd_filters.split(";")
-                new_filters = []
-                for new_filter in filters:
-                    if new_filter.strip():
-                        new_filters.append(
-                            ExcludeFilter(new_filter.strip(), True, True)
-                        )
-                self._exclude_filters = new_filters
 
     @classmethod
     def _get_default_library_roots(cls):
-        pydev_log.debug("Collecting default library roots.")
+        log.debug("Collecting default library roots.")
         # Provide sensible defaults if not in env vars.
         import site
 
@@ -172,12 +151,12 @@ class FilesFiltering(object):
             try:
                 import _pypy_wait
             except ImportError:
-                pydev_log.debug(
+                log.debug(
                     "Unable to import _pypy_wait on PyPy when collecting default library roots."
                 )
             else:
                 pypy_lib_dir = os.path.dirname(_pypy_wait.__file__)
-                pydev_log.debug("Adding %s to default library roots.", pypy_lib_dir)
+                log.debug("Adding %s to default library roots.", pypy_lib_dir)
                 roots.append(pypy_lib_dir)
 
         if hasattr(site, "getusersitepackages"):
@@ -212,7 +191,7 @@ class FilesFiltering(object):
         new_roots = []
         for root in roots:
             path = self._absolute_normalized_path(root)
-            if pydevd_constants.IS_WINDOWS:
+            if IS_WINDOWS:
                 new_roots.append(path + "\\")
             else:
                 new_roots.append(path + "/")
@@ -222,18 +201,21 @@ class FilesFiltering(object):
         """
         Provides a version of the filename that's absolute and normalized.
         """
-        return normcase(pydevd_file_utils.absolute_path(filename))
+        if filename.startswith("<"):
+            return normcase(filename)
+
+        return normcase(os.path.abspath(filename))
 
     def set_project_roots(self, project_roots):
         self._project_roots = self._fix_roots(project_roots)
-        pydev_log.debug("IDE_PROJECT_ROOTS %s\n" % project_roots)
+        log.debug("IDE_PROJECT_ROOTS %s\n" % project_roots)
 
     def _get_project_roots(self):
         return self._project_roots
 
     def set_library_roots(self, roots):
         self._library_roots = self._fix_roots(roots)
-        pydev_log.debug("LIBRARY_ROOTS %s\n" % roots)
+        log.debug("LIBRARY_ROOTS %s\n" % roots)
 
     def _get_library_roots(self):
         return self._library_roots
@@ -246,18 +228,9 @@ class FilesFiltering(object):
         """
         DEBUG = False
 
-        if received_filename.startswith(USER_CODE_BASENAMES_STARTING_WITH):
-            if DEBUG:
-                pydev_log.debug(
-                    "In in_project_roots - user basenames - starts with %s (%s)",
-                    received_filename,
-                    USER_CODE_BASENAMES_STARTING_WITH,
-                )
-            return True
-
         if received_filename.startswith(LIBRARY_CODE_BASENAMES_STARTING_WITH):
             if DEBUG:
-                pydev_log.debug(
+                log.debug(
                     "Not in in_project_roots - library basenames - starts with %s (%s)",
                     received_filename,
                     LIBRARY_CODE_BASENAMES_STARTING_WITH,
@@ -278,9 +251,7 @@ class FilesFiltering(object):
                 or root == absolute_normalized_filename_as_dir
             ):
                 if DEBUG:
-                    pydev_log.debug(
-                        "In project: %s (%s)", absolute_normalized_filename, root
-                    )
+                    log.debug("In project: %s (%s)", absolute_normalized_filename, root)
                 found_in_project.append(root)
 
         found_in_library = []
@@ -292,12 +263,10 @@ class FilesFiltering(object):
             ):
                 found_in_library.append(root)
                 if DEBUG:
-                    pydev_log.debug(
-                        "In library: %s (%s)", absolute_normalized_filename, root
-                    )
+                    log.debug("In library: %s (%s)", absolute_normalized_filename, root)
             else:
                 if DEBUG:
-                    pydev_log.debug(
+                    log.debug(
                         "Not in library: %s (%s)", absolute_normalized_filename, root
                     )
 
@@ -307,7 +276,7 @@ class FilesFiltering(object):
             # and not the other way around).
             in_project = not found_in_library
             if DEBUG:
-                pydev_log.debug(
+                log.debug(
                     "Final in project (no project roots): %s (%s)",
                     absolute_normalized_filename,
                     in_project,
@@ -318,7 +287,7 @@ class FilesFiltering(object):
             if found_in_project:
                 if not found_in_library:
                     if DEBUG:
-                        pydev_log.debug(
+                        log.debug(
                             "Final in project (in_project and not found_in_library): %s (True)",
                             absolute_normalized_filename,
                         )
@@ -330,7 +299,7 @@ class FilesFiltering(object):
                     ):
                         in_project = True
                     if DEBUG:
-                        pydev_log.debug(
+                        log.debug(
                             "Final in project (found in both): %s (%s)",
                             absolute_normalized_filename,
                             in_project,
@@ -338,28 +307,12 @@ class FilesFiltering(object):
 
         return in_project
 
-    def use_libraries_filter(self):
-        """
-        Should we debug only what's inside project folders?
-        """
-        return self._use_libraries_filter
-
-    def set_use_libraries_filter(self, use):
-        pydev_log.debug("pydevd: Use libraries filter: %s\n" % use)
-        self._use_libraries_filter = use
-
-    def use_exclude_filters(self):
-        # Enabled if we have any filters registered.
-        return len(self._exclude_filters) > 0
-
     def exclude_by_filter(self, absolute_filename, module_name):
         """
         :return: True if it should be excluded, False if it should be included and None
             if no rule matched the given file.
         """
-        for (
-            exclude_filter
-        ) in self._exclude_filters:  # : :type exclude_filter: ExcludeFilter
+        for exclude_filter in self._filters:  # : :type exclude_filter: Filter
             if exclude_filter.is_path:
                 if glob_matches_path(absolute_filename, exclude_filter.name):
                     return exclude_filter.exclude
@@ -370,14 +323,3 @@ class FilesFiltering(object):
                 ):
                     return exclude_filter.exclude
         return None
-
-    def set_exclude_filters(self, exclude_filters):
-        """
-        :param list(ExcludeFilter) exclude_filters:
-        """
-        self._exclude_filters = exclude_filters
-        self.require_module = False
-        for exclude_filter in exclude_filters:
-            if not exclude_filter.is_path:
-                self.require_module = True
-                break

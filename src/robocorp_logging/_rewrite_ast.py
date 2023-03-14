@@ -1,7 +1,7 @@
 import ast
 from typing import Optional
 import sys
-from ._rewrite_hook import Config
+from ._rewrite_hook import BaseConfig
 
 DEBUG = False
 
@@ -14,7 +14,7 @@ def rewrite_ast_add_callbacks(
     mod: ast.Module,
     source: Optional[bytes] = None,
     module_path: Optional[str] = None,
-    config: Optional[Config] = None,
+    config: Optional[BaseConfig] = None,
 ) -> None:
     """Rewrite the module as needed so that the logging is done automatically."""
     from robocorp_logging import _ast_utils

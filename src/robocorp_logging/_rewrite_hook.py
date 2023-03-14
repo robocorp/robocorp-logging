@@ -51,7 +51,30 @@ FORCE_CODE_GENERATION = False
 DEBUG = False
 
 
-class Config:
+class BaseConfig:
+    def can_rewrite_module_name(self, module_name: str) -> bool:
+        raise NotImplementedError()
+
+    def can_rewrite_module(self, module_name: str, filename: str) -> bool:
+        raise NotImplementedError()
+
+
+class ConfigFilesFiltering:
+    """
+    A configuration in which modules are rewritten if they are considered "project" modules.
+
+    If no arguments are passed, python is queried for the paths that are "library" paths
+    and "project" paths are all that aren't inside the "library" paths.
+
+    If "project_roots" is passed, then any file inside one of those folders is considered
+    to be a file to be rewritten.
+    """
+
+    def __init__(self, project_roots=None, library_roots=None, exclude_filters=None):
+        from robocorp_logging._rewrite_filtering import FilesFiltering
+
+        self._files_filtering = FilesFiltering()
+
     def can_rewrite_module_name(self, module_name: str) -> bool:
         if module_name.startswith("robocorp_logging."):
             # We don't want to rewrite internal modules.
@@ -77,7 +100,7 @@ else:
 class RewriteHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """PEP302/PEP451 import hook which rewrites asserts."""
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: BaseConfig) -> None:
         self.config = config
         self._rewritten_names: Dict[str, Path] = {}
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
@@ -252,7 +275,7 @@ def _write_pyc(
     return True
 
 
-def _rewrite(fn: Path, config: Config) -> Tuple[os.stat_result, types.CodeType]:
+def _rewrite(fn: Path, config: BaseConfig) -> Tuple[os.stat_result, types.CodeType]:
     """Read and rewrite *fn* and return the code object."""
     from ._rewrite_ast import rewrite_ast_add_callbacks
 
