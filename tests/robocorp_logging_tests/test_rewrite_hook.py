@@ -15,12 +15,15 @@ def test_rewrite_hook():
     from robocorp_logging._rewrite_hook import RewriteHook, Config
     import sys
     from robocorp_logging import rewrite_callbacks
+    from imp import reload
 
     config = Config()
     hook = RewriteHook(config)
     sys.meta_path.insert(0, hook)
 
-    from robot_out_stream_tests._resources import check
+    from robocorp_logging_tests._resources import check
+
+    check = reload(check)
 
     found = []
 

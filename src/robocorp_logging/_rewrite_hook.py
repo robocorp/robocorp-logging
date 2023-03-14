@@ -47,7 +47,7 @@ PYTEST_TAG = f"{sys.implementation.cache_tag}-robocorp-{version}"
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
-FORCE_CODE_GENERATION = True
+FORCE_CODE_GENERATION = False
 DEBUG = False
 
 
@@ -175,7 +175,7 @@ class RewriteHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         tries to filter what we're sure won't be rewritten before getting to
         it.
         """
-        if name.startswith("robocorp_logging"):
+        if name.startswith("robocorp_logging."):
             # We don't want to rewrite internal modules.
             return True
 
