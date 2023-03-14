@@ -52,7 +52,15 @@ DEBUG = False
 
 
 class Config:
-    pass
+    def can_rewrite_module_name(self, module_name: str) -> bool:
+        if module_name.startswith("robocorp_logging."):
+            # We don't want to rewrite internal modules.
+            return True
+
+        return False
+
+    def can_rewrite_module(self, module_name: str, filename: str) -> bool:
+        return "check" in module_name
 
 
 if DEBUG:
@@ -167,7 +175,7 @@ class RewriteHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
             trace(f"found cached rewritten pyc for {fn}")
         exec(co, module.__dict__)
 
-    def _early_rewrite_bailout(self, name: str) -> bool:
+    def _early_rewrite_bailout(self, module_name: str) -> bool:
         """A fast way to get out of rewriting modules.
 
         Profiling has shown that the call to PathFinder.find_spec (inside of
@@ -175,16 +183,10 @@ class RewriteHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         tries to filter what we're sure won't be rewritten before getting to
         it.
         """
-        if name.startswith("robocorp_logging."):
-            # We don't want to rewrite internal modules.
-            return True
+        return self.config.can_rewrite_module_name(module_name)
 
-        # TODO: heuristic to filter just based on the name.
-        return False
-
-    def _should_rewrite(self, name: str, fn: str) -> bool:
-        # TODO: Determine if module should be rewritten
-        return "check" in name
+    def _should_rewrite(self, module_name: str, filename: str) -> bool:
+        return self.config.can_rewrite_module(module_name, filename)
 
     def get_data(self, pathname: Union[str, bytes]) -> bytes:
         """Optional PEP302 get_data API."""
