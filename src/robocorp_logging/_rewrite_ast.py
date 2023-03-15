@@ -1,5 +1,5 @@
 import ast
-from typing import Optional
+from typing import Optional, Any, Union
 import sys
 from ._rewrite_hook import BaseConfig
 
@@ -78,7 +78,11 @@ def rewrite_ast_add_callbacks(
     imports = [ast.Import([alias], lineno=lineno, col_offset=0) for alias in aliases]
     mod.body[pos:pos] = imports
 
-    it = _ast_utils.iter_and_replace_nodes(mod)
+    it: Any = _ast_utils.iter_and_replace_nodes(mod)
+    node: Any
+    parent: Any
+    function: Any
+
     while True:
         try:
             stack, node = next(it)
@@ -105,7 +109,7 @@ def rewrite_ast_add_callbacks(
 
             factory = _ast_utils.NodeFactory(node.lineno, node.col_offset)
 
-            result = []
+            result: list = []
 
             call = factory.Call()
             call.func = factory.NameLoadRewriteCallback("method_return")
@@ -151,8 +155,8 @@ def rewrite_ast_add_callbacks(
                 call.args.append(factory.Str(f"{class_name}{function.name}"))
 
                 dct = factory.Dict()
-                keys = []
-                values = []
+                keys: list[Union[ast.expr, None]] = []
+                values: list[ast.expr] = []
                 for arg in function.args.args:
                     if class_name and arg.arg == "self":
                         continue
