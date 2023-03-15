@@ -6,7 +6,7 @@ import sys
 from collections import namedtuple
 import platform
 import logging
-from typing import Sequence, Optional
+from typing import Sequence, Optional, List, Dict, Any
 import threading
 
 log = logging.getLogger(__name__)
@@ -105,23 +105,31 @@ def glob_matches_path(path, pattern, sep=os.sep, altsep=os.altsep):
 
 class FilesFiltering(object):
     """
-    Note: calls at FilesFiltering are uncached.
+    Usage is something as:
 
-    The actual API used should be through the ConfigFilesFiltering.
+    files_filtering = FilesFiltering(...)
+
+    if files_filtering.accept(mod.__file__, mod.__name__):
+        ...
     """
 
     def __init__(
         self,
         project_roots: Optional[Sequence[str]] = None,
         library_roots: Optional[Sequence[str]] = None,
-        filters: Sequence[Filter] = None,
+        filters: Sequence[Filter] = (),
     ):
         self._filters = filters
-        self._project_roots = []
-        self._library_roots = []
+        self._project_roots: List[str] = []
+        self._library_roots: List[str] = []
+        self._cache: Dict[Any, bool] = {}
 
-        self.set_project_roots(project_roots)
-        self.set_library_roots(library_roots)
+        if project_roots is not None:
+            self._set_project_roots(project_roots)
+
+        if library_roots is None:
+            library_roots = self._get_default_library_roots()
+        self._set_library_roots(library_roots)
 
     @classmethod
     def _get_default_library_roots(cls):
@@ -149,7 +157,7 @@ class FilesFiltering(object):
             # On PyPy 3.6 (7.3.1) it wrongly says that sysconfig.get_path('stdlib') is
             # <install>/lib-pypy when the installed version is <install>/lib_pypy.
             try:
-                import _pypy_wait
+                import _pypy_wait  # type: ignore
             except ImportError:
                 log.debug(
                     "Unable to import _pypy_wait on PyPy when collecting default library roots."
@@ -206,21 +214,21 @@ class FilesFiltering(object):
 
         return normcase(os.path.abspath(filename))
 
-    def set_project_roots(self, project_roots):
+    def _set_project_roots(self, project_roots):
         self._project_roots = self._fix_roots(project_roots)
         log.debug("IDE_PROJECT_ROOTS %s\n" % project_roots)
 
     def _get_project_roots(self):
         return self._project_roots
 
-    def set_library_roots(self, roots):
+    def _set_library_roots(self, roots):
         self._library_roots = self._fix_roots(roots)
         log.debug("LIBRARY_ROOTS %s\n" % roots)
 
     def _get_library_roots(self):
         return self._library_roots
 
-    def in_project_roots(self, received_filename):
+    def _in_project_roots(self, received_filename):
         """
         Note: don't call directly. Use PyDb.in_project_scope (there's no caching here and it doesn't
         handle all possibilities for knowing whether a project is actually in the scope, it
@@ -307,7 +315,7 @@ class FilesFiltering(object):
 
         return in_project
 
-    def exclude_by_filter(self, absolute_filename, module_name):
+    def _exclude_by_filter(self, absolute_filename, module_name):
         """
         :return: True if it should be excluded, False if it should be included and None
             if no rule matched the given file.
@@ -323,3 +331,20 @@ class FilesFiltering(object):
                 ):
                     return exclude_filter.exclude
         return None
+
+    def accept(self, filename: str, module_name: str) -> bool:
+        absolute_filename = self._absolute_normalized_path(filename)
+
+        cache_key = (absolute_filename, module_name)
+        try:
+            return self._cache[cache_key]
+        except KeyError:
+            pass
+
+        exclude = self._exclude_by_filter(absolute_filename, module_name)
+        if exclude is None:
+            exclude = not self._in_project_roots(absolute_filename)
+
+        accept = not exclude
+        self._cache[cache_key] = accept
+        return accept
