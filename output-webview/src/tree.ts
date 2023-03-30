@@ -94,8 +94,11 @@ export function addTreeContent(
         const htmlContents = htmlToElement(content);
         span.appendChild(htmlContents);
     } else {
-        span.textContent = content;
+        // JANNE FIXME: hacked away 'METHOD -'
+        const contentWithoutType = content.replace("METHOD - ","");
+        span.textContent = contentWithoutType;
     }
+    
 
     if (opts.onClickReference) {
         span.classList.add("span_link");
@@ -187,6 +190,8 @@ function* iterOverUlDetailsElements(ul: HTMLUListElement): IterableIterator<HTML
     }
 }
 
+/*
+JANNE FIXME: HIDING THESE FOR NOW
 function updateOnMouseOver(currMouseOver: IContentAdded) {
     if (toolbar === undefined) {
         toolbar = createDiv();
@@ -213,6 +218,7 @@ function updateOnMouseOver(currMouseOver: IContentAdded) {
     globalCurrMouseOver = currMouseOver;
     currMouseOver.summaryDiv.appendChild(toolbar);
 }
+*/
 
 function createUlIfNeededAndAppendChild(child: IContentAdded) {
     const bound: IContentAdded = this;
@@ -223,8 +229,12 @@ function createUlIfNeededAndAppendChild(child: IContentAdded) {
         bound.details.addEventListener("toggle", function () {
             saveTreeStateLater();
         });
+        
+        /*
+        JANNE FIXME: HIDING THESE FOR NOW
         bound.summary.addEventListener("mouseover", (event) => {
             updateOnMouseOver(bound);
         });
+        */
     }
 }

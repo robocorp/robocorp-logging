@@ -5,21 +5,21 @@ export class SummaryBuilder {
     totalFailures: number = 0;
 
     clear() {
-        this.totalTests = 0;
+        /*this.totalTests = 0;
         this.totalFailures = 0;
-        this.updateSummary();
+        this.updateSummary();*/
     }
 
     onTestEndUpdateSummary(msg: any) {
-        const status = msg.decoded["status"];
+        /*const status = msg.decoded["status"];
         this.totalTests += 1;
         if (status == "FAIL" || status == "ERROR") {
             this.totalFailures += 1;
         }
-        this.updateSummary();
+        this.updateSummary();*/
     }
 
-    updateSummary() {
+    /*updateSummary() {
         const totalTestsStr = ("" + this.totalTests).padStart(4);
         const totalFailuresStr = ("" + this.totalFailures).padStart(4);
         const summary = divById("summary");
@@ -40,5 +40,5 @@ export class SummaryBuilder {
             resultBar.classList.remove("NOT_RUN");
             resultBar.classList.remove("FAIL");
         }
-    }
+    }*/
 }

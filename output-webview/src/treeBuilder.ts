@@ -87,8 +87,8 @@ export class TreeBuilder {
         this.summaryBuilder.clear();
         this.resetState();
 
-        const filterLevelEl: HTMLSelectElement = selectById("filterLevel");
-        filterLevelEl.value = this.opts.state.filterLevel;
+        /*const filterLevelEl: HTMLSelectElement = selectById("filterLevel");
+        filterLevelEl.value = this.opts.state.filterLevel;*/
         const mainDiv = divById("mainTree");
         mainDiv.replaceChildren(); // clear all children
 
@@ -172,6 +172,7 @@ export class TreeBuilder {
 
     private addOneMessageSync(msg: IMessage): void {
         let msgType = msg.message_type;
+        console.log("addOneMessageSync", msg)
         switch (msgType) {
             // if it's a replay suite/test/keyword, skip it if we've already seen
             // a suit/test/keyword (otherwise, change the replay to the actual
@@ -263,6 +264,13 @@ export class TreeBuilder {
                 this.onEndUpdateMaxLevelFoundInHierarchyFromStatus(currT, this.parent, msg);
                 this.onEndSetStatusOrRemove(this.opts, currT, msg.decoded, this.parent, false);
                 this.summaryBuilder.onTestEndUpdateSummary(msg);
+
+                // JANNE: the initial call, "challenge.run", is a "test"
+                if(msg.decoded.status === "ERROR") {
+                    console.log("END KEYWORD", this.opts, currT, msg.decoded, this.parent, true);
+                    currT.details.open = true;
+                }
+
                 break;
             case "EK": // end keyword
                 this.messageNode = this.messageNode.parent;
@@ -271,7 +279,12 @@ export class TreeBuilder {
                 this.parent = this.stack.at(-1);
                 this.onEndUpdateMaxLevelFoundInHierarchyFromStatus(currK, this.parent, msg);
                 this.onEndSetStatusOrRemove(this.opts, currK, msg.decoded, this.parent, true);
-
+                
+                if(msg.decoded.status === "ERROR") {
+                    console.log("END KEYWORD", this.opts, currK, msg.decoded, this.parent, true);
+                    currK.details.open = true;
+                }
+                
                 break;
             case "S":
                 // Update the start time from the current message.
@@ -282,9 +295,11 @@ export class TreeBuilder {
                 break;
             case "KA":
                 const item: IContentAdded = this.stack.at(-1);
+                /*
+                JANNE FIXME: let's handle the arguments somewhere else, hiding them for now
                 if (item?.span) {
                     item.span.textContent += ` | ${msg.decoded["argument"]}`;
-                }
+                }*/
                 break;
             case "L":
             case "LH":
@@ -387,6 +402,8 @@ export class TreeBuilder {
             const summary = current.summary;
             addStatus(current, status);
 
+            /*
+            // JANNE FIXME: hid the time for now
             const startTime: number = current.decodedMessage.decoded["time_delta_in_seconds"];
             if (startTime && startTime >= 0) {
                 const endTime: number = endDecodedMsg["time_delta_in_seconds"];
@@ -396,7 +413,7 @@ export class TreeBuilder {
                 //     console.log("Diff: ", diff);
                 // }
                 addTime(current, diff);
-            }
+            }*/
         } else {
             current.li.remove();
         }
