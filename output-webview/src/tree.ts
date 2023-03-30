@@ -44,7 +44,8 @@ export function createLiAndNodesBelow(open: boolean, liTreeId: string): ILiNodes
     details.classList.add("NO_CHILDREN");
 
     const span: HTMLSpanElement = createSpan();
-    span.setAttribute("role", "button");
+    // JANNE FIXME: commented this out to enable expand/close by clicking on the row
+    //span.setAttribute("role", "button");
     summaryDiv.appendChild(span);
 
     return { li, details, summary, summaryDiv, span };
@@ -99,8 +100,8 @@ export function addTreeContent(
         span.textContent = contentWithoutType;
     }
     
-
-    if (opts.onClickReference) {
+    // JANNE FIXME: disabled this, most likely just some VS Code stuff?
+    /*if (opts.onClickReference) {
         span.classList.add("span_link");
         span.onclick = (ev) => {
             const scope = [];
@@ -119,7 +120,7 @@ export function addTreeContent(
                 "scope": scope,
             });
         };
-    }
+    }*/
 
     const ul = createUL("ul_" + id);
     details.appendChild(ul);

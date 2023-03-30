@@ -269,6 +269,7 @@ export class TreeBuilder {
                 if(msg.decoded.status === "ERROR") {
                     console.log("END KEYWORD", this.opts, currT, msg.decoded, this.parent, true);
                     currT.details.open = true;
+                    currT.summary.classList.add("errorParent");
                 }
 
                 break;
@@ -283,6 +284,7 @@ export class TreeBuilder {
                 if(msg.decoded.status === "ERROR") {
                     console.log("END KEYWORD", this.opts, currK, msg.decoded, this.parent, true);
                     currK.details.open = true;
+                    currK.summary.classList.add("errorParent");
                 }
                 
                 break;
