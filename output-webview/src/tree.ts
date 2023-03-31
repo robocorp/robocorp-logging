@@ -20,11 +20,21 @@ import {
 import { IContentAdded, ILiNodesCreated, IMessageNode, IOpts, ITreeState } from "./protocols";
 
 export function createLiAndNodesBelow(open: boolean, liTreeId: string): ILiNodesCreated {
+    
     // <li>
     //   <details open>
     //     <summary>
-    //          <span></span>
+    //       <div class="summaryDiv">
+    //          <span class="label">...</span>
+    //          <span class="summaryName">...</span>
+    //          <span class="summaryInput">...</span>
+    //       </div>
     //     </summary>
+    //     <div class="detailContainer">
+    //       <div class="detailInfo"></div>
+    //       <div class="detailInputs"></div>
+    //     </div>
+    //     <ul>...</ul>
     //   </details>
     // </li>
 
@@ -34,21 +44,49 @@ export function createLiAndNodesBelow(open: boolean, liTreeId: string): ILiNodes
     if (open) {
         details.open = open;
     }
+    
+    /* ADD DETAILS INTO LI */
+
+    details.classList.add("NO_CHILDREN");
+    li.appendChild(details);
+    
+    /* SETUP DETAIL SECTION */
+
+    const detailContainer = createDiv();
+    detailContainer.classList.add("detailContainer");
+    
+    const detailInfo = createDiv();
+    detailInfo.classList.add("detailInfo");
+    detailInfo.textContent = "[detailInfo]";
+    detailContainer.appendChild(detailInfo);
+
+    const detailInputs = createDiv();
+    detailInputs.classList.add("detailInputs");
+    detailInputs.textContent = "[detailInputs]";
+    detailContainer.appendChild(detailInputs);
+
+    details.appendChild(detailContainer);
+
+    /* SUMMARY SECTION */
+
     const summary = createSummary();
     const summaryDiv = createDiv();
     summaryDiv.classList.add("summaryDiv");
     summary.appendChild(summaryDiv);
+    
+    const summaryName: HTMLSpanElement = createSpan();
+    summaryName.className = "summaryName";
+    summaryName.textContent = "[summaryName]";
+    summaryDiv.appendChild(summaryName);
 
-    li.appendChild(details);
+    const summaryInput: HTMLSpanElement = createSpan();
+    summaryInput.className = "summaryInput";
+    summaryInput.textContent = "[summaryInput]";
+    summaryDiv.appendChild(summaryInput);
+
     details.appendChild(summary);
-    details.classList.add("NO_CHILDREN");
 
-    const span: HTMLSpanElement = createSpan();
-    // JANNE FIXME: commented this out to enable expand/close by clicking on the row
-    //span.setAttribute("role", "button");
-    summaryDiv.appendChild(span);
-
-    return { li, details, summary, summaryDiv, span };
+    return { li, details, summary, summaryDiv, detailInputs, summaryName };
 }
 
 /**
@@ -66,15 +104,6 @@ export function addTreeContent(
     messageNode: IMessageNode,
     id: string
 ): IContentAdded {
-    // <li>
-    //   <details open>
-    //     <summary>
-    //          <span></span>
-    //     </summary>
-    //     <ul>
-    //     </ul>
-    //   </details>
-    // </li>
 
     const treeState: ITreeState = opts.state.runIdToTreeState[opts.runId];
     const liTreeId = "li_" + id;
@@ -89,15 +118,15 @@ export function addTreeContent(
     const details = created.details;
     const summary = created.summary;
     const summaryDiv = created.summaryDiv;
-    const span = created.span;
+    const summaryName = created.summaryName;
 
     if (decodedMessage.message_type === "LH") {
         const htmlContents = htmlToElement(content);
-        span.appendChild(htmlContents);
+        summaryName.appendChild(htmlContents);
     } else {
         // JANNE FIXME: hacked away 'METHOD -'
         const contentWithoutType = content.replace("METHOD - ","");
-        span.textContent = contentWithoutType;
+        summaryName.textContent = contentWithoutType;
     }
     
     // JANNE FIXME: disabled this, most likely just some VS Code stuff?
@@ -129,7 +158,7 @@ export function addTreeContent(
         li,
         details,
         summary,
-        span,
+        summaryName,
         source,
         lineno,
         appendContentChild: undefined,

@@ -30,15 +30,11 @@ ul {
     padding-left: 0px;
 }
 
-.tree ul {
-    /* amount of nesting */
-    margin-left: 0.3rem;
-    padding-left: 0.6rem;
-}
-
 /* nesting level vertical line */
-.tree ul:not(:first-child) {
+.tree ul:not(:first-child), .detailContainer {
     border-left: 1px solid #ddd;
+    margin-left: 0.4rem;
+    padding-left: 0.6rem;
 }
 
 /* SUMMARY ROW FOR EACH CODE ROW */
@@ -47,6 +43,9 @@ details > summary {
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
     cursor: pointer;
+
+    /* chrome needs this, safari doesn't */
+    list-style: none;
 }
 
 details > summary:hover {
@@ -67,17 +66,16 @@ details > summary.errorParent::before {
 
 /* icon from: https://github.com/twbs/icons/blob/main/icons/caret-right-square-fill.svg */
 details > summary::before {
-    mask: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-right-square-fill" viewBox="0 0 16 16"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm5.5 10a.5.5 0 0 0 .832.374l4.5-4a.5.5 0 0 0 0-.748l-4.5-4A.5.5 0 0 0 5.5 4v8z"/></svg>');
+    position: absolute;
+    left:0;
+    top:4px;
+
+    /* chrome seems to need the '-webkit' prefix here */
+    -webkit-mask: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black" class="bi bi-caret-right-square-fill" viewBox="0 0 16 16"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm5.5 10a.5.5 0 0 0 .832.374l4.5-4a.5.5 0 0 0 0-.748l-4.5-4A.5.5 0 0 0 5.5 4v8z"/></svg>');
     width: 1rem;
     height: 1rem;
     display: inline-block;
     content: '';
-
-    /* margin between the icon and the line */
-    margin-right: 0.45rem;
-
-    /* hack, to center with the line */
-    margin-bottom: -3px;
 }
 
 details[open] > summary::before {
@@ -85,23 +83,35 @@ details[open] > summary::before {
     transform-origin: 8px 8px; 
 }
 
-/*details > summary::before {
-}
-
-details[open] {
-    
-}
-
-details[open] > summary::before {
-    transform: rotate(90deg);
-}*/
-
 .summaryDiv {
     /* aligns code line correctly with the icon */
-    display: inline-flex;
+    display: flex;
+    margin-left: 1.2rem;
+}
 
-    /* move pass/error after the name */
-    flex-direction: row-reverse;
+.summaryDiv > .label {
+    order: 2;
+    margin-right: auto;
+}
+
+.summaryDiv > .summaryName {
+    order: 1;
+}
+
+.summaryDiv > .summaryInput {
+    order: 3;
+}
+
+.detailContainer {
+    display: flex;
+}
+
+.detailContainer > .detailInfo {
+    margin-right: auto;
+}
+
+.summaryDiv > .summaryInput, .detailContainer > .detailInputs {
+    width: 50vw;
 }
 
 /* LABEL IS THE PASS/ERROR BADGE */

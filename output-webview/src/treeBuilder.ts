@@ -105,7 +105,7 @@ export class TreeBuilder {
             "li": undefined,
             "details": undefined,
             "summary": undefined,
-            "span": undefined,
+            "summaryName": undefined,
             "source": undefined,
             "lineno": undefined,
             "decodedMessage": undefined,
@@ -362,7 +362,7 @@ export class TreeBuilder {
                     // are too many elements under a given parent.
                     const MAX_ELEMENT_COUNT = 50;
                     if (parent.ul.childElementCount > MAX_ELEMENT_COUNT) {
-                        const textContent = current.span.textContent;
+                        const textContent = current.summaryName.textContent;
                         if (textContent && textContent.toLowerCase().includes("iteration")) {
                             const beforeCurrLi: HTMLLIElement = <HTMLLIElement>current.li.previousSibling;
                             const id = getDataTreeId(current.li);
@@ -370,10 +370,10 @@ export class TreeBuilder {
 
                             if (liMarkedAsHidden(beforeCurrLi)) {
                                 const el = beforeCurrLi.getElementsByClassName("FINAL_SPAN")[0];
-                                el.textContent = current.span.textContent;
+                                el.textContent = current.summaryName.textContent;
                             } else {
                                 const created = createLiAndNodesBelow(false, id);
-                                created.span.textContent = current.span.textContent;
+                                created.summaryName.textContent = current.summaryName.textContent;
 
                                 created.summary.classList.add("HIDDEN");
 
