@@ -270,7 +270,15 @@ export class TreeBuilder {
                 if(msg.decoded.status === "ERROR") {
                     console.log("END KEYWORD", this.opts, currT, msg.decoded, this.parent, true);
                     currT.details.open = true;
-                    currT.summary.classList.add("errorParent");
+                    currT.details.classList.add("errorParent");
+                } else {
+                    currT.details.classList.add("passParent");
+                }
+
+                if(currT.ul.children.length === 0) {
+                    currT.details.classList.add("leafNode");
+                } else {
+                    currT.details.classList.add("parentNode");
                 }
 
                 break;
@@ -285,7 +293,15 @@ export class TreeBuilder {
                 if(msg.decoded.status === "ERROR") {
                     console.log("END KEYWORD", this.opts, currK, msg.decoded, this.parent, true);
                     currK.details.open = true;
-                    currK.summary.classList.add("errorParent");
+                    currK.details.classList.add("errorParent");
+                } else {
+                    currK.details.classList.add("passParent");
+                }
+
+                if(currK.ul.children.length === 0) {
+                    currK.details.classList.add("leafNode");
+                } else {
+                    currK.details.classList.add("parentNode");
                 }
                 
                 break;

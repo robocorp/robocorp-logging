@@ -55,14 +55,15 @@ export function createLiAndNodesBelow(open: boolean, liTreeId: string): ILiNodes
     const detailContainer = createDiv();
     detailContainer.classList.add("detailContainer");
     
+    /* this is where error could be displayed etc, hiding it for now */
     const detailInfo = createDiv();
     detailInfo.classList.add("detailInfo");
-    detailInfo.textContent = "[detailInfo]";
+    detailInfo.innerHTML = "<div class=\"errorHeader\">TypeError: NoneType object is not subscriptable</div><div class=\"errorDetails\">set_value_by_xpath(f//input[@ng-reflect-name=\"{name}\"]',person[key])<br>challenge.py, line 32</div>";
     detailContainer.appendChild(detailInfo);
 
     const detailInputs = createDiv();
     detailInputs.classList.add("detailInputs");
-    //detailInputs.textContent = "[detailInputs]";
+    detailInputs.textContent = " ";
     detailContainer.appendChild(detailInputs);
 
     details.appendChild(detailContainer);
