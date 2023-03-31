@@ -47,6 +47,7 @@ export interface ILiNodesCreated {
     summaryDiv: HTMLDivElement;
     detailInputs: HTMLDivElement;
     summaryName: HTMLElement;
+    summaryInput: HTMLElement;
 }
 
 export interface IContentAdded {
@@ -65,6 +66,8 @@ export interface IContentAdded {
     summary: HTMLElement;
     summaryDiv: HTMLDivElement;
     summaryName: HTMLElement;
+    summaryInput: HTMLElement;
+
     source: string;
     lineno: number;
 

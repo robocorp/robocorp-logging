@@ -1,25 +1,47 @@
 /* CONTAINERS ETC */
 
+/* box model reset */
+* {
+    box-sizing: border-box;
+}
+
 html, body {
-    margin:0;
-    padding:0;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+:root {  
+
+    --log-color-error: #FF3333;
+    --log-color-success: #00CCFF;
+    --log-color-warn: #ff6666;
+    --log-color-disabled: #999999;
+    --log-color-border: #dddddd;
+
+    --right-column-width: 50vw;
+
+    font-family: system-ui, "Segoe UI", "Roboto", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 body {
-    font-family: system-ui, "Segoe UI", "Roboto", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    display: flex;
+    flex-direction: column;
+    padding: 1.0rem;
     font-size: 0.8rem;
 }
 
-/* main container */
-#mainTree {
-    background-color: white;
-    margin: 1.0rem;
-}
 
 ul {
     list-style-type: none;
     padding-inline-start: 0px;
     margin-block-start: 0px;
+}
+
+#mainTree {
+    white-space: nowrap;
+    overflow: auto;
+    flex-grow: 1;
 }
 
 /* TREE */
@@ -32,9 +54,13 @@ ul {
 
 /* nesting level vertical line */
 .tree ul:not(:first-child), .detailContainer {
-    border-left: 1px solid #ddd;
-    margin-left: 0.4rem;
-    padding-left: 0.6rem;
+    border-left: 1px solid var(--log-color-border);
+
+    /* centering the line with the icon */
+    margin-left: 0.65rem;
+
+    /* nesting indentation */
+    padding-left: 0.8rem;
 }
 
 /* SUMMARY ROW FOR EACH CODE ROW */
@@ -42,6 +68,7 @@ ul {
 details > summary {
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
+    padding-left: 0.25rem;
     cursor: pointer;
 
     /* chrome needs this, safari doesn't */
@@ -49,7 +76,8 @@ details > summary {
 }
 
 details > summary:hover {
-    background-color: #eee;
+    background-color: #f3f3f3;
+    border-radius: 2px;
 }
 
 details > summary::-webkit-details-marker {
@@ -57,17 +85,17 @@ details > summary::-webkit-details-marker {
 }
 
 details > summary::before {
-    background-color: #00CCFF;
+    background-color: var(--log-color-success);
 }
 
 details > summary.errorParent::before {
-    background-color: #FF3333;
+    background-color: var(--log-color-error);
 }
 
 /* icon from: https://github.com/twbs/icons/blob/main/icons/caret-right-square-fill.svg */
 details > summary::before {
     position: absolute;
-    left:0;
+    left:0.25rem;
     top:4px;
 
     /* chrome seems to need the '-webkit' prefix here */
@@ -76,11 +104,13 @@ details > summary::before {
     height: 1rem;
     display: inline-block;
     content: '';
+    transform-origin: 8px 8px;
+    transform: rotate(0deg);
+    transition: transform 0.3s ease-out !important;
 }
 
 details[open] > summary::before {
     transform: rotate(90deg);
-    transform-origin: 8px 8px; 
 }
 
 .summaryDiv {
@@ -91,15 +121,20 @@ details[open] > summary::before {
 
 .summaryDiv > .label {
     order: 2;
-    margin-right: auto;
 }
 
 .summaryDiv > .summaryName {
     order: 1;
+    margin-left: 0.25rem;
+}
+
+summary.errorParent .summaryName {
+    font-weight: bold;
 }
 
 .summaryDiv > .summaryInput {
     order: 3;
+    margin-left: auto;
 }
 
 .detailContainer {
@@ -111,52 +146,89 @@ details[open] > summary::before {
 }
 
 .summaryDiv > .summaryInput, .detailContainer > .detailInputs {
-    width: 50vw;
+    width: var(--right-column-width);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media only screen and (max-width : 860px) {
+    .summaryDiv > .summaryInput, .detailContainer > .detailInputs, .headerInputs {
+        display: none;
+    }
+}
+
+/* HEADERS */
+
+.headers {
+    display: flex;
+    border-bottom: 1px solid var(--log-color-border);
+    padding-bottom: 1.0rem;
+    margin-bottom: 1.0rem;
+}
+
+.headerSource, .headerInputs {
+    font-weight:bold;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.headerInputs {
+    margin-left: auto;
+    width: var(--right-column-width);
+}
+
+.headerRunDetails {
+    margin:0;
+    margin-bottom: 1.5rem;
+}
+
+h3 {
+    margin:0;
+    padding:0;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+h3 .label {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.4rem;
+    height: auto;
+    margin-left: 0.5rem;
 }
 
 /* LABEL IS THE PASS/ERROR BADGE */
 
 .label {
-    margin-left: 0.5rem;
+    display: inline-block;
+    margin-left: 0.35rem;
+    color: white;
+    font-weight: 600;
+    font-size: 0.60rem;
+    border-radius: 2px;
+    padding: 0px 5px;
+    height: 1rem;
+    line-height: 1rem;
 }
 
 .label.F,
 .label.E,
 .label.FAIL,
 .label.ERROR {
-    color: #FF3333;
+    background-color: var(--log-color-error);
 }
 
 .label.PASS,
 .label.I,
 .label.INFO {
-    color: #00CCFF;
+    /* hide labels when everything was successful */
+    display:none;
 }
 
 .label.W,
 .label.WARN {
-    color: orange;
+    background-color: var(--log-color-warn);
 }
 
 .label.NOT_RUN {
-    color: #999;
+    background-color: var(--log-color-disabled);
 }
-  
-/* HIDDEN SECTIONS (IGNORE THESE FOR NOW) */
-
-/*summary.HIDDEN {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    background-color: lightgreen;
-}
-
-.label.HIDDEN {
-    border-radius: 3px;
-    background-color: var(--hidden-background-color);
-    color: var(--hidden-color);
-    font-weight: bolder;
-}
-
-.label.HIDDEN.inline {
-    margin-left: 5px;
-}*/

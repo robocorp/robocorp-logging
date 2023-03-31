@@ -1,56 +1,23 @@
 <!DOCTYPE html>
-<html style="padding: 0 0 0 0; margin: 0 0 0 0; height: 100%">
+<html>
     <head>
         <meta charset="utf-8" />
-        <title>Robot Output</title>
+        <title>Robot Output — Python RPA Challenge</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
-    <div style="display: none">Some text is here</div>
-    <body
-        class="vscode-dark"
-        style="padding: 0 0 0 0; margin: 0 0 0 0; height: 100%; display: flex; flex-direction: column"
-    >
-        <!-- JANNE FIXME: REMOVING THESE FOR NOW
-        <div style="display: flex">
-            <div class="summaryField" style="flex-grow: 1; white-space: nowrap" id="summary" class="NOT_RUN">
-                Total:&nbsp;&nbsp;&nbsp;&nbsp;Failures:&nbsp;&nbsp;&nbsp;&nbsp;
-            </div>
-            <div class="summaryField" style="flex-grow: 1">
-                <div style="display: flex">
-                    <span>Filter:&nbsp;</span>
-                    <select
-                        name="filterLevel"
-                        id="filterLevel"
-                        style="flex-grow: 1"
-                        onchange="window.onChangedFilterLevel()"
-                    >
-                        <option value="FAIL">FAIL</option>
-                        <option value="WARN">WARN</option>
-                        <option value="PASS" selected="selected">PASS</option>
-                        <option value="NOT RUN">NOT RUN</option>
-                    </select>
-                </div>
-            </div>
-            <div class="summaryField" id="selectRunContainer" style="flex-grow: 2; display: none">
-                <select name="selectedRun" id="selectedRun" onchange="window.onChangedRun()" style="width: 100%">
-                    <option value="NO_RUN" selected="selected">No runs available...</option>
-                </select>
-            </div>
-        </div>
-        -->
+    <body>
+        <h3>Python RPA Challenge<span class="label ERROR">Run Failed</span></h3>
+        <div class="headerRunDetails">31 March 2023 at 13:30 (UTC+2) — 13 seconds elapsed</div>
 
-        <div id="mainTree" style="white-space: nowrap; overflow: auto; flex-grow: 1"></div>
+        <div class="headers">
+            <span class="headerSource">Source</span>
+            <span class="headerInputs">Input Arguments</span>
+        </div>
+        <div id="mainTree"></div>
     </body>
     <script>
-        try {
-            const vscode = acquireVsCodeApi();
-            window.setVSCodeAPI(vscode);
-            document.getElementById("selectRunContainer").style.display = "block";
-        } catch (err) {
-            // That's ok (not running in VSCode).
-            window.setContents({
-                "initialContents": window.getSampleContents(),
-            });
-        }
+        window.setContents({
+            "initialContents": window.getSampleContents(),
+        });
     </script>
 </html>

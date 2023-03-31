@@ -106,6 +106,7 @@ export class TreeBuilder {
             "details": undefined,
             "summary": undefined,
             "summaryName": undefined,
+            "summaryInput": undefined,
             "source": undefined,
             "lineno": undefined,
             "decodedMessage": undefined,
@@ -222,7 +223,7 @@ export class TreeBuilder {
                 this.parent = addTreeContent(
                     this.opts,
                     this.parent,
-                    this.suiteName + msg.decoded["name"],
+                    this.suiteName + msg.decoded["name"] + "()",
                     msg,
                     false,
                     this.suiteSource,
@@ -297,11 +298,15 @@ export class TreeBuilder {
                 break;
             case "KA":
                 const item: IContentAdded = this.stack.at(-1);
+
+                item.summaryInput.textContent = msg.decoded["argument"];
+
                 /*
                 JANNE FIXME: let's handle the arguments somewhere else, hiding them for now
                 if (item?.span) {
                     item.span.textContent += ` | ${msg.decoded["argument"]}`;
                 }*/
+
                 break;
             case "L":
             case "LH":

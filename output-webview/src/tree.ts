@@ -62,7 +62,7 @@ export function createLiAndNodesBelow(open: boolean, liTreeId: string): ILiNodes
 
     const detailInputs = createDiv();
     detailInputs.classList.add("detailInputs");
-    detailInputs.textContent = "[detailInputs]";
+    //detailInputs.textContent = "[detailInputs]";
     detailContainer.appendChild(detailInputs);
 
     details.appendChild(detailContainer);
@@ -81,12 +81,12 @@ export function createLiAndNodesBelow(open: boolean, liTreeId: string): ILiNodes
 
     const summaryInput: HTMLSpanElement = createSpan();
     summaryInput.className = "summaryInput";
-    summaryInput.textContent = "[summaryInput]";
+    summaryInput.textContent = "—";
     summaryDiv.appendChild(summaryInput);
 
     details.appendChild(summary);
 
-    return { li, details, summary, summaryDiv, detailInputs, summaryName };
+    return { li, details, summary, summaryDiv, detailInputs, summaryName, summaryInput };
 }
 
 /**
@@ -119,6 +119,7 @@ export function addTreeContent(
     const summary = created.summary;
     const summaryDiv = created.summaryDiv;
     const summaryName = created.summaryName;
+    const summaryInput = created.summaryInput;
 
     if (decodedMessage.message_type === "LH") {
         const htmlContents = htmlToElement(content);
@@ -159,6 +160,7 @@ export function addTreeContent(
         details,
         summary,
         summaryName,
+        summaryInput,
         source,
         lineno,
         appendContentChild: undefined,
