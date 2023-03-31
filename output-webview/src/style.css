@@ -253,6 +253,7 @@ h3 {
 .errorParent.leafNode .label.E,
 .errorParent.leafNode .label.FAIL,
 .errorParent.leafNode .label.ERROR {
+    display: block;
     background-color: var(--log-color-error);
 }
 
