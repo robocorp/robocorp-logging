@@ -1,4 +1,4 @@
-# The `.rfstream` format
+# The `.robolog` format
 
 ## Requirements
 
@@ -36,9 +36,9 @@ The requirements for the generated log files are the following:
 The basic log can actually be split into multiple files.
 Such files are splitted in the following files (the idea is that it can be split when it becomes too big).
 
-- `output.rfstream`
-- `output_2.rfstream`
-- `output_3.rfstream`
+- `output.robolog`
+- `output_2.robolog`
+- `output_3.robolog`
 - ...
 
 The file should be always written and flushed at each log entry and it should be consistent even if the process crashes in the meanwhile (meaning that all entries written are valid up to the point of the crash).
