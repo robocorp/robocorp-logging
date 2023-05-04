@@ -1,0 +1,36 @@
+{
+  "name": "log-ui",
+  "description": "",
+  "version": "0.1.0",
+  "copyright": "Copyright 2021 Robocorp Technologies, Inc.",
+  "license": "SEE LICENSE IN LICENSE",
+  "main": "index.js",
+  "author": {
+    "name": "Robocorp Technologies",
+    "email": "info@robocorp.com",
+    "url": "https://robocorp.com"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint './src/**/*.{ts,tsx}' --max-warnings 0"
+  },
+  "dependencies": {
+    "@robocorp/components": "1.0.1-RC1",
+    "@robocorp/icons": "^1.0.0",
+    "@robocorp/theme": "^1.0.0",
+    "preact": "^10.13.2"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.5.0",
+    "@robocorp/eslint-config-frontend": "^1.0.0",
+    "@robocorp/prettier-config-robocorp": "^1.1.1",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.1",
+    "eslint": "^8.39.0",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.4",
+    "vite-plugin-singlefile": "^0.13.5"
+  },
+  "prettier": "@robocorp/prettier-config-robocorp"
+}
