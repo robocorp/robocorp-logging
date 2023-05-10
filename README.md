@@ -1,3 +1,6 @@
+⚠️ This project has been moved to the [robo](https://github.com/robocorp/robo/) repository
+---
+
 # Logging for python based Robocorp projects
 
 Logging focused on RPA projects for Robocorp robots.
